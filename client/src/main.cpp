@@ -11,6 +11,13 @@
 #include "nvs_flash.h"
 
 #include <Adafruit_AHTX0.h>
+#include "light.h"
+
+
+#define CALIBRATION_ON false
+#define LIGHT_SENSOR 33
+
+
 Adafruit_AHTX0 aht;
 
 char ssid[50] = "UCInet Mobile Access";//"Gone with the Wind"; // your network SSID (name)
@@ -21,9 +28,13 @@ char pass[50] = {0}; //"zotzotzot"; // your network password (use for WPA, or us
 const int kNetworkTimeout = 30 * 1000;
 // Number of milliseconds to wait if no data is available before trying again
 const int kNetworkDelay = 1000;
+// static int LIGHT_SENSOR = 33;
 
 String var;
 sensors_event_t humidity, temp;
+uint16_t light_read;
+double light_val;
+String public_IP = "54.177.115.132";//"18.219.240.227";
 
 void nvs_access() {
   // Initialize NVS
@@ -106,13 +117,22 @@ void setup() {
   Serial.println(WiFi.macAddress());
 
   sensor_configuration();
+  if (CALIBRATION_ON){
+    light_calibration(LIGHT_SENSOR);
+  }
 }
 
 void loop() {
   // Read Temperature and Humidity Data
   aht.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+
+  // Read Light Data
+  light_read = analogRead(LIGHT_SENSOR);
+  light_val = map(light_read);
+
   Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
   Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
+  Serial.print("Light Level: "); Serial.print(light_val*100, 3); Serial.println("%");
 
   // Print to the Webpage
   int err = 0;
@@ -120,8 +140,9 @@ void loop() {
   HttpClient http(c);
 
   var = (String)"/?var=" + (String)temp.temperature + "," + (String)humidity.relative_humidity;
+  var += "," + (String)light_val;
 
-  err = http.get("54.177.115.132", 5000, var.c_str());
+  err = http.get(public_IP.c_str(), 5000, var.c_str());
   // err = http.get("127.0.0.1", 5000, var.c_str());
   
   if (err == 0) {
