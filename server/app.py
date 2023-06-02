@@ -8,20 +8,28 @@ from flask import Flask, render_template, make_response
 app = Flask(__name__)
 
 temperature = 0
+humidity = 0
 
 @app.route('/', methods=["GET", "POST"])
 def main():
     global temperature
-    temperature = request.args.get("var")
+    global humidity
+    result = request.args.get("var")
+    if result is not None:
+        print("result: ", result.split(','))
+        temperature, humidity = result.split(',')
     return render_template('index.html')
 
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
     temp = 0
+    hum = 0
     if temperature is not None:
         temp = float(temperature)
-    print(temp, type(temp))
+    if humidity is not None:
+        hum = float(humidity)
+    print(temp, type(temp), hum, type(hum))
     # # Data Format
     # # [TIME, Temperature, Humidity]
 
@@ -29,7 +37,7 @@ def data():
     # Humidity = random() * 55
     # data = [10, 0, 0]
     
-    data = [time() * 1000, temp, 0]
+    data = [time() * 1000, temp, hum]
 
     response = make_response(json.dumps(data))
 
