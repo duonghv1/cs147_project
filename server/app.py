@@ -19,7 +19,7 @@ def main():
     result = request.args.get("var")
     if result is not None:
         print("result: ", result.split(','))
-        temperature, humidity = result.split(',')
+        temperature, humidity = [float(i) for i in result.split(',')]
     temperature_average = ((temperature_average * temperature_count) + temperature) / float(temperature_count + 1)
     temperature_count += 1
     return render_template('index.html')
@@ -30,9 +30,9 @@ def data():
     temp = 0
     hum = 0
     if temperature is not None:
-        temp = float(temperature)
+        temp = temperature
     if humidity is not None:
-        hum = float(humidity)
+        hum = humidity
     print(temp, type(temp), hum, type(hum))
     # # Data Format
     # # [TIME, Temperature, Humidity]
