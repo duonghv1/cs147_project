@@ -9,6 +9,8 @@ app = Flask(__name__)
 
 temperature = 0
 humidity = 0
+temperature_average = 0
+temperature_count = 0
 
 @app.route('/', methods=["GET", "POST"])
 def main():
@@ -18,6 +20,8 @@ def main():
     if result is not None:
         print("result: ", result.split(','))
         temperature, humidity = result.split(',')
+    temperature_average = ((temperature_average * temperature_count) + temperature) / float(temperature_count + 1)
+    temperature_count += 1
     return render_template('index.html')
 
 
