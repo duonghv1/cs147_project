@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
 
-    <title>Flask App </title>
+    <title>Anteater Sleep Awareness </title>
 
     <!-- Bootstraps Java Scipts Links -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -41,16 +41,19 @@
         <div class="row">
 
             <div class="col-5 jumbotron p-2 mx-1">
-                <h1 class="sensor1"> Sensor : </h1>
+                <h1 class="sensor1"> Temperature : </h1>
             </div>
             <br>
 
             <div class="col-5 jumbotron p-2 mx-1">
-                <h1 class="sensor2">Sensor :</h1>
+                <h1 class="sensor2">Humidity : </h1>
             </div>
             <br>
 
-
+            <div class="col-5 jumbotron p-2 mx-1">
+                <h1 class="sensor3">Lightness : </h1>
+            </div>
+            <br>
 
         </div>
     </div>
@@ -59,7 +62,7 @@
 
         .jumbotron{
             widows: 150px;
-            height: 220px;
+            height: 110px;
             justify-content: center;
         }
 
@@ -90,11 +93,23 @@
             </div>
         </div>
     </div>
+<br>
+<br>
+<br>
 
+    <div class="container-fluid">
+        <!-- Example row of columns -->
+        <div class="row">
+            <div class="container-fluid" id="data-lightness">
+
+            </div>
+        </div>
+    </div>
 
     <script>
         var chartTemperatue;
         var chartHumidity;
+        var chartLightness;
 
         function requestData()
         {
@@ -111,6 +126,10 @@
                 var seriesHumidity = chartHumidity.series[0],
                     shiftHumidity = seriesTemperature.data.length > 20;
 
+                // Humidity
+                var seriesLightness = chartLightness.series[0],
+                    shiftLightness = seriesLightness.data.length > 20;
+
                 // Add the Point
                 // Time Temperature\
                 var data1 = [];
@@ -124,14 +143,24 @@
                 data2.push(result[0]);
                 data2.push(result[2]);
 
+                // Add the Point
+                // Time Humidity
+                var data3 = [];
+                data3.push(result[0]);
+                data3.push(result[3]);
+
 
                 chartTemperatue.series[0].addPoint(data1, true, shiftTemperature);
                 chartHumidity.series[0].addPoint(data2, true, shiftHumidity);
+                chartLightness.series[0].addPoint(data3, true, shiftLightness);
                 $(".sensor1").text("");
                 $(".sensor1").text("Temperature : " +  Math.round(data1[1]) );
 
                 $(".sensor2").text("");
                 $(".sensor2").text("Humidity : " +  Math.round(data2[1]) );
+
+                $(".sensor3").text("");
+                $(".sensor3").text("Lightness : " +  Math.round(data3[1]) );
 
                 // call it again after one second
                 setTimeout(requestData, 2000); //2000
@@ -177,6 +206,7 @@
             });
             // --------------Chart 1 Ends - -----------------
 
+            // --------------Chart 2 - -----------------
             chartHumidity = new Highcharts.Chart({
                 chart:
                     {
@@ -210,6 +240,40 @@
                 }]
             });
 
+            // --------------Chart 3 ----------------------------
+            chartLightness = new Highcharts.Chart({
+                chart:
+                    {
+                    renderTo: 'data-lightness',
+                    defaultSeriesType: 'area',
+                    events: {
+                        load: requestData
+                            }
+                    },
+                title:
+                    {
+                    text: 'Lightness'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                        },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Value',
+                        margin: 80
+                            }
+                         },
+                series: [{
+                    color : '#c23d23',
+                    lineColor: '#303030',
+                    name: 'Lightness',
+                    data: []
+                }]
+            });
 
         });
     </script>
