@@ -55,6 +55,11 @@
             </div>
             <br>
 
+            <div class="col-5 jumbotron p-2 mx-1">
+                <h1 class="sensor4">Noise : </h1>
+            </div>
+            <br>
+
         </div>
     </div>
 
@@ -86,7 +91,6 @@
 <br>
 
     <div class="container-fluid">
-        <!-- Example row of columns -->
         <div class="row">
             <div class="container-fluid" id="data-humidity">
 
@@ -98,18 +102,30 @@
 <br>
 
     <div class="container-fluid">
-        <!-- Example row of columns -->
         <div class="row">
             <div class="container-fluid" id="data-lightness">
 
             </div>
         </div>
     </div>
+<br>
+<br>
+<br>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="container-fluid" id="data-noiseFreq">
+
+            </div>
+        </div>
+    </div>
+
 
     <script>
         var chartTemperatue;
         var chartHumidity;
         var chartLightness;
+        var chartNoiseFreq
 
         function requestData()
         {
@@ -130,29 +146,35 @@
                 var seriesLightness = chartLightness.series[0],
                     shiftLightness = seriesLightness.data.length > 20;
 
+                var seriesNoise = chartNoiseFreq.series[0],
+                    shiftNoise = seriesNoise.data.length > 20;
+
                 // Add the Point
                 // Time Temperature\
                 var data1 = [];
                 data1.push(result[0]);
                 data1.push(result[1]);
 
-
-                // Add the Point
                 // Time Humidity
                 var data2 = [];
                 data2.push(result[0]);
                 data2.push(result[2]);
 
-                // Add the Point
                 // Time Lightness
                 var data3 = [];
                 data3.push(result[0]);
                 data3.push(result[3]);
 
+                // Time NoiseFreq
+                var data4 = [];
+                data4.push(result[0]);
+                data4.push(result[4]);
+
 
                 chartTemperatue.series[0].addPoint(data1, true, shiftTemperature);
                 chartHumidity.series[0].addPoint(data2, true, shiftHumidity);
                 chartLightness.series[0].addPoint(data3, true, shiftLightness);
+                chartNoiseFreq.series[0].addPoint(data4, true, shiftNoise);
                 $(".sensor1").text("");
                 $(".sensor1").text("Temperature : " +  Math.round(data1[1]) );
 
@@ -161,6 +183,9 @@
 
                 $(".sensor3").text("");
                 $(".sensor3").text("Lightness : " +  Math.round(data3[1]) );
+
+                $(".sensor4").text("");
+                $(".sensor4").text("Noise Frequency : " +  Math.round(data4[1]) );
 
                 // call it again after one second
                 setTimeout(requestData, 20000); //2000
@@ -273,6 +298,41 @@
                     data: []
                 }]
             });
+
+            // --------------Chart 4 - -----------------
+            chartNoiseFreq = new Highcharts.Chart({
+                chart:
+                    {
+                        renderTo: 'data-noiseFreq',
+                        defaultSeriesType: 'area',
+                        // events: {
+                        //     load: requestData
+                        // }
+                    },
+                title:
+                    {
+                        text: 'Noise Frequency'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Value',
+                        margin: 80
+                    }
+                },
+                series: [{
+                    lineColor: '#1d82b8',
+                    name: 'Noise Appearance',
+                    data: []
+                }]
+            });
+
             requestData(); // Call requestData() once after the charts are initialized
         }
         $(document).ready(function() {
@@ -319,9 +379,10 @@
             t1.classList.add("display-3");
         }
     }
-    const imgUrl = 'https://media3.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'
-    const size = "50";
+    const imgUrl = 'https://media.giphy.com/media/SjgCkzRInVZK0/giphy.gif'//https://media3.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'
+    const size = "60";
     var obj = new Image(imgUrl, size);
+
     obj.backgroundImage();
     obj.centerTitle();
     </script>

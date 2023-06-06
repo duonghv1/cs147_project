@@ -41,7 +41,8 @@ def data():
     temp = temperature
     hum = humidity
     light = lightness
-    print(temp, type(temp), hum, type(hum), light, type(light), sound, type(sound))
+    noiseFre = sound;
+    print(temp, type(temp), hum, type(hum), light, type(light), noiseFre, type(noiseFre))
     # # Data Format
     # # [TIME, Temperature, Humidity]
 
@@ -49,7 +50,7 @@ def data():
     # Humidity = random() * 55
     # data = [10, 0, 0]
     
-    data = [time() * 1000, temp, hum, light]
+    data = [time() * 1000, temp, hum, light, noiseFre]
 
     response = make_response(json.dumps(data))
 
