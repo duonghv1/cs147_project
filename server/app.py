@@ -10,23 +10,26 @@ app = Flask(__name__)
 temperature = 0
 humidity = 0
 lightness = 0
+sound = 0
 temperature_average = 0
 temperature_count = 0
 
 @app.route('/', methods=["GET", "POST"])
 def main():
-    global temperature, humidity, lightness, temperature_average, temperature_count
+    global temperature, humidity, lightness, sound, temperature_average, temperature_count
     # global humidity
     result = request.args.get("var")
     if result is not None:
         print("result: ", result.split(','))
-        temperature, humidity, lightness = result.split(',')
+        temperature, humidity, lightness, sound = result.split(',')
         if temperature is not None:
             temperature = float(temperature)
         if humidity is not None:
             humidity = float(humidity)
         if lightness is not None:
             lightness = float(lightness)
+        if sound is not None:
+            sound = float(sound)
 
         temperature_average = ((temperature_average * temperature_count) + temperature) / float(temperature_count + 1)
         temperature_count += 1
@@ -38,7 +41,7 @@ def data():
     temp = temperature
     hum = humidity
     light = lightness
-    print(temp, type(temp), hum, type(hum), light, type(light))
+    print(temp, type(temp), hum, type(hum), light, type(light), sound, type(sound))
     # # Data Format
     # # [TIME, Temperature, Humidity]
 

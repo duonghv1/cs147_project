@@ -61,7 +61,7 @@
     <style>
 
         .jumbotron{
-            widows: 150px;
+            widows: 90px;
             height: 110px;
             justify-content: center;
         }
@@ -144,7 +144,7 @@
                 data2.push(result[2]);
 
                 // Add the Point
-                // Time Humidity
+                // Time Lightness
                 var data3 = [];
                 data3.push(result[0]);
                 data3.push(result[3]);
@@ -163,22 +163,21 @@
                 $(".sensor3").text("Lightness : " +  Math.round(data3[1]) );
 
                 // call it again after one second
-                setTimeout(requestData, 2000); //2000
+                setTimeout(requestData, 20000); //2000
 
             });
         }
 
-        $(document).ready(function()
-        {
+        function initCharts() {
             // --------------Chart 1 ----------------------------
             chartTemperatue = new Highcharts.Chart({
                 chart:
                     {
                     renderTo: 'data-temperature',
                     defaultSeriesType: 'area',
-                    events: {
-                        load: requestData
-                            }
+                    // events: {
+                    //     load: requestData
+                    //         }
                     },
                 title:
                     {
@@ -212,9 +211,9 @@
                     {
                         renderTo: 'data-humidity',
                         defaultSeriesType: 'area',
-                        events: {
-                            load: requestData
-                        }
+                        // events: {
+                        //     load: requestData
+                        // }
                     },
                 title:
                     {
@@ -246,9 +245,9 @@
                     {
                     renderTo: 'data-lightness',
                     defaultSeriesType: 'area',
-                    events: {
-                        load: requestData
-                            }
+                    // events: {
+                    //     load: requestData
+                    //         }
                     },
                 title:
                     {
@@ -274,7 +273,10 @@
                     data: []
                 }]
             });
-
+            requestData(); // Call requestData() once after the charts are initialized
+        }
+        $(document).ready(function() {
+            initCharts();
         });
     </script>
 
