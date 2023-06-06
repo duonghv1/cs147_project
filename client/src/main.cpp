@@ -7,19 +7,18 @@
 
 #include <Adafruit_AHTX0.h>
 #include "light.h"
-#include "microphone.h"
 
 #define CALIBRATION_ON false
 #define LIGHT_SENSOR 33
 #define MIC_SENSOR 15
 
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 
 Adafruit_AHTX0 aht;
 
-char ssid[50] = "UCInet Mobile Access"; //"Gone with the Wind";// your network SSID (name)
-char pass[50] = {0}; //"zotzotzot"; // your network password (use for WPA, or use as key for WEP)
+char ssid[50] = "Gone with the Wind"; //"UCInet Mobile Access"; // your network SSID (name)
+char pass[50] = "zotzotzot"; //{0}; // your network password (use for WPA, or use as key for WEP)
 
 String public_IP = "54.177.115.132";//"18.219.240.227";
 const int port = 5000;
@@ -95,7 +94,7 @@ void loop() {
 
   // Read Light Data
   light_read = analogRead(LIGHT_SENSOR);
-  light_val = map(light_read);
+  light_val = map(light_read)*100;
 
   // Read Sound Data
   sound_val += digitalRead(MIC_SENSOR);
@@ -103,7 +102,7 @@ void loop() {
   // PRINT RESULTS
   Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
   Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
-  Serial.print("Light Level: "); Serial.print(light_val*100, 2); Serial.println("%");
+  Serial.print("Light Level: "); Serial.print(light_val, 2); Serial.println("%");
   Serial.print("Sound Exists: "); Serial.println(sound_val);
 
   // Upload data to the server
@@ -173,6 +172,9 @@ void loop() {
       http.stop();
     }
     // End of Upload
+  }
+  else{
+    sound_val = 0;
   }
   Serial.println();
   delay(samplingFreq);
