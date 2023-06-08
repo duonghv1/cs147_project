@@ -12,9 +12,11 @@
 #define MIC_SENSOR 38
 // #define ACCELINT_PIN 38
 #define GYROINT_PIN 32
-#define BUTTON_PIN 26
+#define BUTTON_PIN 33
 
 #define DEBUG_MODE true
+#define ON_MODE true
+#define BUTTON_PIN_BITMASK 0x200000000 // 2^33 in hex
 
 const int threshold = 130;
 const int lower_bound_threshold = 90;
@@ -26,8 +28,8 @@ bool hasCount = false;
 int motion_val = 0;
 
 // Wi-Fi Configuration
-char ssid[50] = "Gone with the Wind"; //"UCInet Mobile Access"; // your network SSID (name)
-char pass[50] = "zotzotzot"; //{0}; // your network password (use for WPA, or use as key for WEP)
+char ssid[50] = "UCInet Mobile Access"; //"Gone with the Wind";  // your network SSID (name)
+char pass[50] = {0}; //"zotzotzot"; // your network password (use for WPA, or use as key for WEP)
 
 String public_IP = "54.177.115.132";//"18.219.240.227";
 const int port = 5000;
@@ -134,19 +136,13 @@ void setup(){
   upload_timer = millis() + uploadFreq;
   Serial.println();
 
-  //Button setup
+  //Button setup & Sleep Mode setup
+  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
   pinMode(BUTTON_PIN, INPUT);
 }
 
 void loop() {
   // Read Sound Data
-  //Serial.print("Microphone detect: "); Serial.println(digitalRead(MIC_SENSOR));
-  if (digitalRead(BUTTON_PIN) == HIGH){
-    Serial.println("Button Pressed");
-    // TODO: go to deep sleep mode    
-  }
-  
-  //Serial.println(digitalRead(MIC_SENSOR));
   if (digitalRead(MIC_SENSOR) == LOW){
     if (!has_sound){
       sound_val++;
@@ -218,4 +214,11 @@ void loop() {
 
   // Serial.println();
   delay(samplingFreq);
+
+  if (digitalRead(BUTTON_PIN) == HIGH){
+    Serial.println("Button Pressed");
+    Serial.println("Going to sleep");
+    delay(1000); // Has to be long enough in case the user hasn't release the button for long and restart the program again
+    esp_deep_sleep_start();
+  }
 }
