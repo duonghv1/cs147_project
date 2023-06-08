@@ -7,14 +7,12 @@
 
 #include "SparkFunLSM6DSO.h"
 #include "Wire.h"
-// #include "gyroscope.h"
 
 #define MIC_SENSOR 38
-// #define ACCELINT_PIN 38
 #define GYROINT_PIN 32
 #define BUTTON_PIN 33
 
-#define DEBUG_MODE true
+#define DEBUG_MODE false  //false: upload value to the server
 #define ON_MODE true
 #define BUTTON_PIN_BITMASK 0x200000000 // 2^33 in hex
 
@@ -24,8 +22,12 @@ const int lower_bound_threshold = 90;
 // Accelerometer & Gyroscope Configuration
 LSM6DSO myIMU;
 float xavg, yavg, zavg, x, y, z, total;
-bool hasCount = false;
+bool has_motion = false;
 int motion_val = 0;
+
+// Microphone Configuration
+int sound_val = 0;
+bool has_sound = false;
 
 // Wi-Fi Configuration
 char ssid[50] = "UCInet Mobile Access"; //"Gone with the Wind";  // your network SSID (name)
@@ -39,12 +41,13 @@ const int kNetworkTimeout = 30 * 1000;
 const int kNetworkDelay = 1000;
 
 const int uploadFreq = 20*1000; //20 sec per update to the server
-const int samplingFreq = 50; //5 sec => for each sensor
+// const int samplingFreq = 50; //5 sec => for each sensor
+const int soundDetectFreq = 100; //Ref: duration of a finger click/snap is 50 ms ~ 150 ms
 unsigned long upload_timer;
+unsigned long sound_timer;
 
-String var;
-int sound_val = 1;
-bool has_sound = false;
+String queryString; // Parameter to 
+
 
 void gyroCalibrate(){
   float sum, sum1, sum2 = 0;
@@ -71,27 +74,15 @@ void gyroCalibrate(){
   zavg = sum2 / 100.0;
 
   Serial.println("Calibration values:");
-  Serial.print("xavg=");
-  Serial.print(xavg);
-  Serial.print(", yavg=");
-  Serial.print(yavg);
-  Serial.print(", zavg=");
-  Serial.println(zavg);
-  delay(100);
+  Serial.print("xavg="); Serial.print(xavg);
+  Serial.print(", yavg="); Serial.print(yavg);
+  Serial.print(", zavg="); Serial.println(zavg);
 }
 
 void wifi_setup() {
-  Serial.begin(9600);
-  delay(1000);
-  // Retrieve SSID/PASSWD from flash before anything else
-  //nvs_access();
-
   // We start by connecting to a WiFi network
-  delay(1000);
-  Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
-
   Serial.println(ssid);
 
   WiFi.begin(ssid, pass);
@@ -101,12 +92,9 @@ void wifi_setup() {
     Serial.print(".");
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println("MAC address: ");
-  Serial.println(WiFi.macAddress());
+  Serial.println("\nWiFi connected");
+  Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  Serial.println("MAC address: "); Serial.println(WiFi.macAddress());
   Serial.println();
 }
 
@@ -119,11 +107,15 @@ void IMU_congifuration(){
     Serial.println("Freezing");
     while(1);
   }
-  if( myIMU.initialize(HARD_INT_SETTINGS) )
-    Serial.println("Start Testing");
+  if( !myIMU.initialize(HARD_INT_SETTINGS) ){
+    Serial.println("Error initialize myIMU!");
+  }
 }
 
 void setup(){
+  Serial.begin(9600);
+  delay(1000);
+
   wifi_setup();
 
   //gyroscope setup
@@ -139,15 +131,18 @@ void setup(){
   //Button setup & Sleep Mode setup
   esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
   pinMode(BUTTON_PIN, INPUT);
+  sound_timer = millis();
 }
 
 void loop() {
   // Read Sound Data
+  // Unsolved: The Microphone is not very Accurate
   if (digitalRead(MIC_SENSOR) == LOW){
-    if (!has_sound){
+    if (millis() > sound_timer){
       sound_val++;
-      has_sound = true;
-      // Serial.println("Sound detected");
+      // has_sound = true;
+      Serial.println("Sound detected");
+      sound_timer = millis() + soundDetectFreq;
     }
   }
   else{
@@ -162,13 +157,13 @@ void loop() {
     total = sqrt((x*x + y*y + z*z));
     // Serial.print("The total is ");Serial.println(total);
 
-    if (total > threshold && !hasCount){
+    if (total > threshold && !has_motion){
       motion_val++;
-      hasCount = true;
+      has_motion = true;
       Serial.print("Motion detected when "); Serial.println(total);
     }
-    else if (total < lower_bound_threshold && hasCount){
-      hasCount = false;
+    else if (total < lower_bound_threshold && has_motion){
+      has_motion = false;
     }
   }
   // PRINT RESULTS
@@ -181,9 +176,10 @@ void loop() {
       WiFiClient c;
       HttpClient http(c);
 
-      var = (String)"/?var2=" + (String)sound_val + "," + (String)motion_val;
+      queryString = (String)"/?var2=" + (String)sound_val + "," + (String)motion_val;
+      Serial.println(queryString);
 
-      err = http.get(public_IP.c_str(), port, var.c_str());
+      err = http.get(public_IP.c_str(), port, queryString.c_str());
     
       if (err == 0) {
         // Serial.println("\nstartedRequest ok");
@@ -206,19 +202,21 @@ void loop() {
     Serial.print("Motion Frequency: "); Serial.println(motion_val);
     Serial.print("Noise Frequency: "); Serial.println(sound_val);
 
-    sound_val=1;
+    sound_val=0;
     motion_val=0;
     // Restart timer
     upload_timer = millis() + uploadFreq;
   }
-
-  // Serial.println();
-  delay(samplingFreq);
-
+  
+  // Determine whether to sleep
+  // Todo: Use interrupt to enter DEEP SLEEP
   if (digitalRead(BUTTON_PIN) == HIGH){
     Serial.println("Button Pressed");
     Serial.println("Going to sleep");
     delay(1000); // Has to be long enough in case the user hasn't release the button for long and restart the program again
     esp_deep_sleep_start();
   }
+
+  // Serial.println();
+  //delay(samplingFreq);
 }
