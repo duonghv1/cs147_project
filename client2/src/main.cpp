@@ -4,16 +4,16 @@
 #include <WiFi.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <TFT_eSPI.h>
 
 #include "SparkFunLSM6DSO.h"
 #include "Wire.h"
 
-#define MIC_SENSOR 38
+#define MIC_SENSOR 15
 #define GYROINT_PIN 32
 #define BUTTON_PIN 33
 
 #define DEBUG_MODE false  //false: upload value to the server
-#define ON_MODE true
 #define BUTTON_PIN_BITMASK 0x200000000 // 2^33 in hex
 
 const int threshold = 130;
@@ -46,10 +46,39 @@ const int soundDetectFreq = 100; //Ref: duration of a finger click/snap is 50 ms
 unsigned long upload_timer;
 unsigned long sound_timer;
 
-String queryString; // Parameter to 
+String queryString;
 
+// TFT Configuration
+TFT_eSPI tft = TFT_eSPI();
+
+void print(String s){
+  tft.fillScreen(TFT_PURPLE);
+  tft.setTextColor(TFT_WHITE, TFT_PURPLE);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString(s, tft.width()/2, tft.height()/2);
+}
+
+void tft_setup(){
+  // OLED Display Configuration
+  tft.init();
+  tft.setRotation(1);
+  tft.setTextSize(3);
+  tft.fillScreen(TFT_PURPLE);
+  tft.setTextColor(TFT_WHITE, TFT_PURPLE);
+  // tft.setTextSize(3);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Anteater", tft.width()/2, 30);
+  tft.drawString("Sleep", tft.width()/2, tft.height()/2);
+  tft.drawString("Awareness", tft.width()/2, tft.height()-30);
+
+  delay(2000);
+  tft.setTextSize(2);
+}
 
 void gyroCalibrate(){
+  print("Start Calibration");
   float sum, sum1, sum2 = 0;
   float xval[100] = {};
   float yval[100] = {};
@@ -77,9 +106,11 @@ void gyroCalibrate(){
   Serial.print("xavg="); Serial.print(xavg);
   Serial.print(", yavg="); Serial.print(yavg);
   Serial.print(", zavg="); Serial.println(zavg);
+  delay(1000);
 }
 
 void wifi_setup() {
+  print("Connecting to Wi-Fi");
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
@@ -116,6 +147,7 @@ void setup(){
   Serial.begin(9600);
   delay(1000);
 
+  tft_setup();
   wifi_setup();
 
   //gyroscope setup
@@ -132,6 +164,12 @@ void setup(){
   esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
   pinMode(BUTTON_PIN, INPUT);
   sound_timer = millis();
+
+  print("Ready for sleep!");
+  delay(2000);
+
+  tft.fillScreen(TFT_BLACK);
+  digitalWrite(38, LOW); // turn off the back light of lcd
 }
 
 void loop() {
