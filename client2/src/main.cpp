@@ -57,6 +57,7 @@ void print(String s){
 
   tft.setTextDatum(MC_DATUM);
   tft.drawString(s, tft.width()/2, tft.height()/2);
+  delay(1000);
 }
 
 void tft_setup(){
@@ -180,6 +181,7 @@ void loop() {
       sound_val++;
       // has_sound = true;
       Serial.println("Sound detected");
+      print("Sound detected");
       sound_timer = millis() + soundDetectFreq;
     }
   }
@@ -199,6 +201,7 @@ void loop() {
       motion_val++;
       has_motion = true;
       Serial.print("Motion detected when "); Serial.println(total);
+      print("Motion Detected");
     }
     else if (total < lower_bound_threshold && has_motion){
       has_motion = false;
@@ -216,6 +219,8 @@ void loop() {
 
       queryString = (String)"/?var2=" + (String)sound_val + "," + (String)motion_val;
       Serial.println(queryString);
+      print((String)sound_val);
+      print((String)motion_val);
 
       err = http.get(public_IP.c_str(), port, queryString.c_str());
     
@@ -249,6 +254,7 @@ void loop() {
   // Determine whether to sleep
   // Todo: Use interrupt to enter DEEP SLEEP
   if (digitalRead(BUTTON_PIN) == HIGH){
+    print("Power off...");
     Serial.println("Button Pressed");
     Serial.println("Going to sleep");
     delay(1000); // Has to be long enough in case the user hasn't release the button for long and restart the program again
