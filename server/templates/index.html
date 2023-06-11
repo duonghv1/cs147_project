@@ -12,7 +12,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
 
-
     <!-- JQuery links  -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
@@ -57,6 +56,11 @@
 
             <div class="col-5 jumbotron p-2 mx-1">
                 <h1 class="sensor4">Noise : </h1>
+            </div>
+            <br>
+
+            <div class="col-5 jumbotron p-2 mx-1">
+                <h1 class="sensor5">Motion : </h1>
             </div>
             <br>
 
@@ -119,6 +123,18 @@
             </div>
         </div>
     </div>
+<br>
+<br>
+<br>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="container-fluid" id="data-motionFreq">
+
+            </div>
+        </div>
+    </div>
+
 
 
     <script>
@@ -137,55 +153,102 @@
                 // Temperature
                 var seriesTemperature = chartTemperatue.series[0],
                     shiftTemperature = seriesTemperature.data.length > 20;
+                
+                // Average Temperature
+                var seriesAvgTemperature = chartTemperatue.series[1],
+                    shiftAvgTemperature = seriesAvgTemperature.data.length > 20;
 
                 // Humidity
                 var seriesHumidity = chartHumidity.series[0],
                     shiftHumidity = seriesTemperature.data.length > 20;
 
-                // Humidity
+                // Average Humidity
+                var seriesAvgHumidity = chartHumidity.series[1],
+                    shiftAvgHumidity = seriesAvgHumidity.data.length > 20;
+
+                // Light
                 var seriesLightness = chartLightness.series[0],
                     shiftLightness = seriesLightness.data.length > 20;
-
+                
+                // Average Light
+                var seriesAvgLightness = chartLightness.series[1],
+                    shiftAvgLightness = seriesAvgLightness.data.length > 20;
+                
+                // Noise frequency
                 var seriesNoise = chartNoiseFreq.series[0],
                     shiftNoise = seriesNoise.data.length > 20;
 
+                // Average Noise frequency
+                var seriesAvgNoise = chartNoiseFreq.series[1],
+                    shiftAvgNoise = seriesAvgNoise.data.length > 20;
+                
+                // Motion Frequency
+                var seriesMotion = chartMotionFreq.series[0],
+                    shiftMotion = seriesMotion.data.length > 20;
+
+                // average Motion Frequency
+                var seriesAvgMotion = chartMotionFreq.series[1],
+                    shiftAvgMotion = seriesAvgMotion.data.length > 20;
+
+
                 // Add the Point
-                // Time Temperature\
-                var data1 = [];
-                data1.push(result[0]);
-                data1.push(result[1]);
+                // Time Temperature
+                var data1 = [result[0], result[1]];
 
                 // Time Humidity
-                var data2 = [];
-                data2.push(result[0]);
-                data2.push(result[2]);
+                var data2 = [result[0], result[2]];
 
                 // Time Lightness
-                var data3 = [];
-                data3.push(result[0]);
-                data3.push(result[3]);
+                var data3 = [result[0], result[3]];
 
                 // Time NoiseFreq
-                var data4 = [];
-                data4.push(result[0]);
-                data4.push(result[4]);
+                var data4 = [result[0], result[4]];
 
+                // Time MotionFreq
+                var data5 = [result[0], result[5]];
 
+                // Time Average Temperature
+                var data6 = [result[0], result[6]];
+
+                // Time Average Humidity
+                var data7 = [result[0], result[7]];
+
+                // Time Average Light
+                var data8 = [result[0], result[8]];
+
+                // Time Average Noise Frequency
+                var data9 = [result[0], result[9]];
+
+                // Time Average Motion Frequency
+                var data10 = [result[0], result[10]];
+
+                // add normal data points
                 chartTemperatue.series[0].addPoint(data1, true, shiftTemperature);
                 chartHumidity.series[0].addPoint(data2, true, shiftHumidity);
                 chartLightness.series[0].addPoint(data3, true, shiftLightness);
                 chartNoiseFreq.series[0].addPoint(data4, true, shiftNoise);
+                chartMotionFreq.series[0].addPoint(data5, true, shiftMotion);
+                // add average data points
+                chartTemperatue.series[1].addPoint(data6, true, shiftAvgTemperature);
+                chartHumidity.series[1].addPoint(data7, true, shiftAvgHumidity);
+                chartLightness.series[1].addPoint(data8, true, shiftAvgLightness);
+                chartNoiseFreq.series[1].addPoint(data9, true, shiftAvgNoise);
+                chartMotionFreq.series[1].addPoint(data10, true, shiftAvgMotion);
+
                 $(".sensor1").text("");
-                $(".sensor1").text("Temperature : " +  Math.round(data1[1]) );
+                $(".sensor1").text("Average Temperature : " +  Math.round(data6[1]) );
 
                 $(".sensor2").text("");
-                $(".sensor2").text("Humidity : " +  Math.round(data2[1]) );
+                $(".sensor2").text("Average Humidity : " +  Math.round(data7[1]) );
 
                 $(".sensor3").text("");
-                $(".sensor3").text("Lightness : " +  Math.round(data3[1]) );
+                $(".sensor3").text("Average Light : " +  Math.round(data8[1]) );
 
                 $(".sensor4").text("");
-                $(".sensor4").text("Noise Frequency : " +  Math.round(data4[1]) );
+                $(".sensor4").text("Average Noise Frequency : " +  Math.round(data9[1]) );
+
+                $(".sensor5").text("");
+                $(".sensor5").text("Average Motion Frequency : " +  Math.round(data10[1]) );
 
                 // call it again after one second
                 setTimeout(requestData, 20000); //2000
@@ -223,9 +286,14 @@
                          },
                 series: [{
                     color : '#c23d23',
-                    lineColor: '#303030',
+                    lineColor: '#c23d23',
                     name: 'Temperature',
                     data: []
+                },{
+                    color: '#3399FF',
+                    lineColor: '#3399FF',
+                    name: 'Average Temperature',
+                    data: [], 
                 }]
             });
             // --------------Chart 1 Ends - -----------------
@@ -258,9 +326,15 @@
                     }
                 },
                 series: [{
-                    lineColor: '#1d82b8',
+                    color: '#303030',
+                    lineColor: '#303030',
                     name: 'Humidity',
                     data: []
+                },{
+                    color: '#3399FF',
+                    lineColor: '#3399FF',
+                    name: 'Average Humidity',
+                    data: [], 
                 }]
             });
 
@@ -276,7 +350,7 @@
                     },
                 title:
                     {
-                    text: 'Lightness'
+                    text: 'Light'
                     },
                 xAxis: {
                     type: 'datetime',
@@ -293,9 +367,14 @@
                          },
                 series: [{
                     color : '#c23d23',
-                    lineColor: '#303030',
-                    name: 'Lightness',
+                    lineColor: '#c23d23',
+                    name: 'Light',
                     data: []
+                },{
+                    color: '#3399FF',
+                    lineColor: '#3399FF',
+                    name: 'Average Light',
+                    data: [], 
                 }]
             });
 
@@ -327,10 +406,56 @@
                     }
                 },
                 series: [{
-                    lineColor: '#1d82b8',
-                    name: 'Noise Appearance',
+                    color: '#303030',
+                    lineColor: '#303030',
+                    name: 'Noise Occurences',
                     data: []
-                }]
+                },{
+                    color: '#3399FF',
+                    lineColor: '#3399FF',
+                    name: 'Average Noise Occurences',
+                    data: [], 
+                }],
+            });
+
+            // --------------Chart 5 - -----------------
+            chartMotionFreq = new Highcharts.Chart({
+                chart:
+                    {
+                        renderTo: 'data-motionFreq',
+                        defaultSeriesType: 'area',
+                        // events: {
+                        //     load: requestData
+                        // }
+                    },
+                title:
+                    {
+                        text: 'Motion Frequency'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Value',
+                        margin: 80
+                    }
+                },
+                series: [{
+                    color : '#c23d23',
+                    lineColor: '#c23d23',
+                    name: 'Movement Occurences',
+                    data: []
+                },{
+                    color: '#3399FF',
+                    lineColor: '#3399FF',
+                    name: 'Average Movement Occurences',
+                    data: [], 
+                }],
             });
 
             requestData(); // Call requestData() once after the charts are initialized
