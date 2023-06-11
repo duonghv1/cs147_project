@@ -4,38 +4,87 @@
 #include <WiFi.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <TFT_eSPI.h>
 
 #include <Adafruit_AHTX0.h>
-#include "light.h"
+// #include "light.h"
 
+#define LIGHT_SENSOR 32
+#define BUTTON_PIN 33
+
+#define BUTTON_PIN_BITMASK 0x200000000 // 2^33 in hex
+
+#define DEBUG_MODE true
 #define CALIBRATION_ON false
-#define LIGHT_SENSOR 33
-#define MIC_SENSOR 15
 
-#define DEBUG_MODE false
-
-
+// Temperature & Humidity configuration
 Adafruit_AHTX0 aht;
+sensors_event_t humidity, temp;
 
+// Light (photosensor) configuration
+uint16_t light_read;
+double light_val;
+
+// Wi-Fi configuration
 char ssid[50] = "Gone with the Wind"; //"UCInet Mobile Access"; // your network SSID (name)
 char pass[50] = "zotzotzot"; //{0}; // your network password (use for WPA, or use as key for WEP)
 
 String public_IP = "54.177.115.132";//"18.219.240.227";
 const int port = 5000;
-// Number of milliseconds to wait without receiving any data before we give up
-const int kNetworkTimeout = 30 * 1000;
-// Number of milliseconds to wait if no data is available before trying again
-const int kNetworkDelay = 1000;
 
-const int uploadFreq = 20*1000; //20 sec per update to the server
-const int samplingFreq = 5*1000; //5 sec => for each sensor
-unsigned long upload_timer;
+// const int uploadFreq = 20*1000; //20 sec per update to the server
+// const int samplingFreq = 5*1000; //5 sec => for each sensor
+// unsigned long upload_timer;
+#define uS_TO_S_FACTOR 1000000
+#define TIME_TO_SLEEP  30
+RTC_DATA_ATTR int bootCount= 0;
 
-String var;
-sensors_event_t humidity, temp;
-uint16_t light_read;
-double light_val;
-int sound_val = 0;
+String queryString;
+
+// TFT Configuration
+TFT_eSPI tft = TFT_eSPI();
+
+
+void print_wakeup_reason(){
+   esp_sleep_wakeup_cause_t wake_up_source;
+
+   wake_up_source = esp_sleep_get_wakeup_cause();
+
+   switch(wake_up_source){
+      case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wake-up from external signal with RTC_IO"); break;
+      case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wake-up from external signal with RTC_CNTL"); break;
+      case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wake up caused by a timer"); break;
+      case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wake up caused by a touchpad"); break;
+      default : Serial.printf("Wake up not caused by Deep Sleep: %d\n",wake_up_source); break;
+   }
+}
+
+void print(String s){
+  tft.fillScreen(TFT_PURPLE);
+  tft.setTextColor(TFT_WHITE, TFT_PURPLE);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString(s, tft.width()/2, tft.height()/2);
+  delay(1000);
+}
+
+void tft_setup(){
+  // OLED Display Configuration
+  tft.init();
+  tft.setRotation(1);
+  tft.setTextSize(3);
+  tft.fillScreen(TFT_PURPLE);
+  tft.setTextColor(TFT_WHITE, TFT_PURPLE);
+  // tft.setTextSize(3);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Anteater", tft.width()/2, 30);
+  tft.drawString("Sleep", tft.width()/2, tft.height()/2);
+  tft.drawString("Awareness", tft.width()/2, tft.height()-30);
+
+  delay(2000);
+  tft.setTextSize(2);
+}
 
 void AHT_setup(){
   if (! aht.begin()) {
@@ -46,18 +95,9 @@ void AHT_setup(){
 }
 
 void wifi_setup() {
-  Serial.begin(9600);
-  delay(1000);
-  // Retrieve SSID/PASSWD from flash before anything else
-  //nvs_access();
-
   // We start by connecting to a WiFi network
-  delay(1000);
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-
-  Serial.println(ssid);
+  print("Connecting to Wi-Fi");
+  Serial.print("\nConnecting to "); Serial.println(ssid);
 
   WiFi.begin(ssid, pass);
 
@@ -66,116 +106,104 @@ void wifi_setup() {
     Serial.print(".");
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println("MAC address: ");
-  Serial.println(WiFi.macAddress());
+  Serial.println("\nWiFi connected");
+  Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  Serial.println("MAC address: "); Serial.println(WiFi.macAddress());
   Serial.println();
 }
 
 void setup(){
-  wifi_setup();
+  Serial.begin(9600);
+  delay(1000);
 
-  AHT_setup();
-  if (CALIBRATION_ON){
-    light_calibration(LIGHT_SENSOR);
-  }
+  // tft_setup();
+  // wifi_setup();
+  delay(1000);
 
-  //microphone setup
-  pinMode(MIC_SENSOR, INPUT);
-  upload_timer = millis() + uploadFreq;
+  // AHT_setup();
+  // if (CALIBRATION_ON){
+  //   light_calibration(LIGHT_SENSOR);
+  // }
+  // else{
+  //   default_calibration();
+  // }
+
+  // Button & Sleep Mode setup
+  // esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
+  // pinMode(BUTTON_PIN, INPUT);
+  
+  // Upload & Sleep Mode setup
+  //Set timer to 5 seconds
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  // Displays the reason for the wake up
+  print_wakeup_reason();
+
+  // print("Ready...!");
+  // tft.fillScreen(TFT_BLACK);
+  // digitalWrite(38, LOW); // turn off the back light of lcd
+
+  // upload_timer = millis() + uploadFreq;
+  //Go to sleep now
+  // esp_deep_sleep_start();
 }
 
 void loop() {
+  /*
   // Read Temperature and Humidity Data
   aht.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
 
   // Read Light Data
   light_read = analogRead(LIGHT_SENSOR);
-  light_val = map(light_read)*100;
+  light_val = map(light_read);
 
-  // Read Sound Data
-  sound_val += digitalRead(MIC_SENSOR);
-  
-  // PRINT RESULTS
-  Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
-  Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
-  Serial.print("Light Level: "); Serial.print(light_val, 2); Serial.println("%");
-  Serial.print("Sound Exists: "); Serial.println(sound_val);
-
-  // Upload data to the server
-  // Question: 
-  //    Is MIC connected to the same board as other sensors?
-  //       if yes => Temp & Light sensor only need to sample at the same rate as uploading rate
-  //       if no => the ESP32 connected with Temp&Light can implement sleeping mode; and the data collecting format(var=?) needs to be changed
-  //        ==> we can add a name to each parameter such as "temp=None,light=None,mic=3"
-  if (!DEBUG_MODE){
-    if (millis() > upload_timer){
+  // if (millis() > upload_timer){
+    if (!DEBUG_MODE){
       int err = 0;
       WiFiClient c;
       HttpClient http(c);
 
-      var = (String)"/?var=" + (String)temp.temperature + "," + (String)humidity.relative_humidity;
-      var += "," + (String)light_val;
-      var += "," + (String)sound_val;
+      queryString = (String)"/?var1=" + (String)temp.temperature + "," + (String)humidity.relative_humidity;
+      queryString += "," + (String)light_val;
+      // print("temp="+(String)temp.temperature);
+      // print("humidity="+(String)humidity.relative_humidity);
+      // print("light="+(String)light_val);
 
-      err = http.get(public_IP.c_str(), port, var.c_str());
-      sound_val = 0;
+      err = http.get(public_IP.c_str(), port, queryString.c_str());
     
       if (err == 0) {
         // Serial.println("\nstartedRequest ok");
         err = http.responseStatusCode();
         if (err >= 0) {
-          // Serial.print("Got status code: ");
-          // Serial.println(err);
-
-          err = http.skipResponseHeaders();
-          if (err >= 0) {
-            int bodyLen = http.contentLength();
-            // Serial.print("Content length is: ");
-            // Serial.println(bodyLen);
-            // Serial.println();
-            // Serial.println("Body returned follows:");
-
-            // Now we've got to the body, so we can print it out
-            unsigned long timeoutStart = millis();
-            char c;
-            // Whilst we haven't timed out & haven't reached the end of the body
-            while ((http.connected() || http.available()) && ((millis() - timeoutStart) < kNetworkTimeout)) {
-              if (http.available()) {
-                c = http.read();
-                // Print out this character
-                // Serial.print(c);
-                
-                bodyLen--;
-                // We read something, reset the timeout counter
-                timeoutStart = millis();
-              } else {
-                // We haven't got any data, so let's pause to allow some to arrive
-                delay(kNetworkDelay);
-              }
-            }
-          } else {
-            Serial.print("Failed to skip response headers: ");
-            Serial.println(err);
-          }
+          Serial.print("Got status code: "); Serial.println(err);
         } else {
-          Serial.print("Getting response failed: ");
-          Serial.println(err);
+          Serial.print("Getting response failed: "); Serial.println(err);
         }
       } else {
-        Serial.print("Connect failed: ");
-        Serial.println(err);
+        Serial.print("Connect failed: "); Serial.println(err);
       }
       http.stop();
+      // End of Upload
     }
-    // End of Upload
+
+    // PRINT RESULTS
+    Serial.println("*************One Upload*****************");
+    Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
+    Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
+    Serial.print("Light Level: "); Serial.print(light_val, 2); Serial.println("%");
+
+    // Restart timer
+    // upload_timer = millis() + uploadFreq;
+  // }
+
+  // Determine whether to sleep
+  // Todo: Use interrupt to enter DEEP SLEEP
+  if (digitalRead(BUTTON_PIN) == HIGH){
+    print("Power off...");
+    Serial.println("Button Pressed");
+    Serial.println("Going to sleep");
+    delay(1000); // Has to be long enough in case the user hasn't release the button for long and restart the program again
+    //esp_deep_sleep_start();
   }
-  else{
-    sound_val = 0;
-  }
-  Serial.println();
-  delay(samplingFreq);
+  */
+  esp_deep_sleep_start();
 }
