@@ -30,10 +30,10 @@ int sound_val = 0;
 bool has_sound = false;
 
 // Wi-Fi Configuration
-char ssid[50] = "UCInet Mobile Access"; //"Gone with the Wind";  // your network SSID (name)
-char pass[50] = {0}; //"zotzotzot"; // your network password (use for WPA, or use as key for WEP)
+char ssid[50] = "Try Again";  //"UCInet Mobile Access"; //"Gone with the Wind";  // your network SSID (name)
+char pass[50] = "icanttellyou"; // {0}; //"zotzotzot"; // your network password (use for WPA, or use as key for WEP)
 
-String public_IP = "54.177.115.132";//"18.219.240.227";
+String public_IP = "18.219.240.227"; // "54.177.115.132";
 const int port = 5000;
 // Number of milliseconds to wait without receiving any data before we give up
 const int kNetworkTimeout = 30 * 1000;

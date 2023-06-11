@@ -55,7 +55,9 @@ def data():
     motionFre = motion_freq.current_value
     print(noiseFre, noise_freq.avg_value, noise_freq.count)
     
-    data = [time() * 1000, temp, hum, lightness, noiseFre, motionFre, noise_freq.avg_value]
+    data = [time() * 1000, temp, hum, lightness, noiseFre, motionFre]
+    data += [metric.avg_value for metric in environ_metrics]
+    data += [metric.avg_value for metric in human_metrics]
 
     response = make_response(json.dumps(data))
 
