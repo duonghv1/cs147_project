@@ -4,57 +4,58 @@ import json
 from time import time
 from random import random
 from flask import Flask, render_template, make_response
+from collections import defaultdict
+from metric import Metric
 
 app = Flask(__name__)
 
-temperature, humidity, lightness, sound, motion, temperature_average, temperature_count= 0, 0, 0, 0, 0, 0, 0
+# motion and sound: upload rate = 20 sec
+# temp and humidity: upload rate = 30 minutes
+
+temperature = Metric("float")
+humidity = Metric("float")
+light = Metric("float")
+motion_freq = Metric("int")
+noise_freq = Metric("int")
+
+environ_metrics = [temperature, humidity, light]
+human_metrics = [noise_freq, motion_freq ] # order matters
 
 
 @app.route('/', methods=["GET", "POST"])
 def main():
-    global temperature, humidity, lightness, sound, temperature_average, temperature_count
+    global temperature, humidity, light, sound_freq, motion_freq
     result1 = request.args.get("var1")
     result2 = request.args.get("var2")
 
     if result1 is not None:
         print("result1: ", result1.split(','))
-        temperature, humidity, lightness = result1.split(',')
-        if temperature is not None:
-            temperature = float(temperature)
-        if humidity is not None:
-            humidity = float(humidity)
-        if lightness is not None:
-            lightness = float(lightness)
-        temperature_average = ((temperature_average * temperature_count) + temperature) / float(temperature_count + 1)
-        temperature_count += 1
+        result1 = result1.split(',')
+        assert len(result1) == 3, f"result1: {result1} is not matching all environMetrics"
+        for i, val in enumerate(result1):
+            environ_metrics[i].update_value(val)
+
 
     if result2 is not None:
         print("result2: ", result2.split(','))
-        sound, motion = result2.split(',')
-        if sound is not None:
-            sound = int(sound)
-        if motion is not None:
-            motion = int(motion)
+        result2 = result2.split(',')
+        assert len(result2) == 2, f"result2: {result2} is not matching all humanMetrics"
+        for i, val in enumerate(result2):
+            human_metrics[i].update_value(val)
             
     return render_template('index.html')
 
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
-    temp = temperature
-    hum = humidity
-    light = lightness
-    noiseFre = sound
-    motionFre = motion
-    print(temp, type(temp), hum, type(hum), light, type(light), noiseFre, type(noiseFre), motionFre, type(motionFre))
-    # # Data Format
-    # # [TIME, Temperature, Humidity]
-
-    # Temperature = random() * 100
-    # Humidity = random() * 55
-    # data = [10, 0, 0]
+    temp = temperature.current_value
+    hum = humidity.current_value
+    lightness = light.current_value
+    noiseFre = noise_freq.current_value
+    motionFre = motion_freq.current_value
+    print(noiseFre, noise_freq.avg_value, noise_freq.count)
     
-    data = [time() * 1000, temp, hum, light, noiseFre, motionFre]
+    data = [time() * 1000, temp, hum, lightness, noiseFre, motionFre, noise_freq.avg_value]
 
     response = make_response(json.dumps(data))
 
