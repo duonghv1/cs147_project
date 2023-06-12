@@ -17,19 +17,21 @@
 #define DEBUG_MODE false
 #define CALIBRATION_ON false
 
+
 // Temperature & Humidity configuration
 Adafruit_AHTX0 aht;
 sensors_event_t humidity, temp;
 
-bool onMode = true;
+RTC_DATA_ATTR bool onMode = true;
+RTC_DATA_ATTR int bootNum = 0;
 
 // Light (photosensor) configuration
 uint16_t light_read;
 double light_val;
 
 // Wi-Fi configuration
-char ssid[50] = "Gone with the Wind"; //"UCInet Mobile Access"; // your network SSID (name)
-char pass[50] = "zotzotzot"; //{0}; // your network password (use for WPA, or use as key for WEP)
+char ssid[50] = "Gone with the Wind";  //"UCInet Mobile Access";// your network SSID (name)
+char pass[50] =  "zotzotzot";  //{0};// your network password (use for WPA, or use as key for WEP)
 
 String public_IP = "54.177.115.132";//"18.219.240.227";
 const int port = 5000;
@@ -51,24 +53,34 @@ void tft_setup();
 void AHT_setup();
 void wifi_setup();
 void IRAM_ATTR turnOff();
-void determineOnOff();
+void on_off();
 void showLogo();
 
 void setup(){
   Serial.begin(9600);
-  delay(1000);
-
-  tft_setup();
-
-  // Button & Sleep Mode setup
-  //esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, HIGH);
   delay(100);
+  
 
-  // determineOnOff();
+  pinMode(BUTTON_PIN, INPUT);
+  // Button & Sleep Mode setup
+  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
+  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, HIGH);
+  delay(30);
+
+  on_off();
+
+  if (bootNum == 0){ //print the logo when it's first turned on
+    tft_setup();
+    showLogo();
+    print("Connecting to Wi-Fi");
+  }
+  
+
+  // Upload & Sleep Mode setup
+  // Set timer to 30 seconds
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+
   wifi_setup();
-  //delay(1000);
-
   AHT_setup();
   if (CALIBRATION_ON){
     light_calibration(LIGHT_SENSOR);
@@ -77,21 +89,16 @@ void setup(){
     default_calibration();
   }
 
-  pinMode(BUTTON_PIN, INPUT);
-  // attachInterrupt(BUTTON_PIN, turnOff, HIGH); 
-
-  print("Ready...!");
-  tft.fillScreen(TFT_BLACK);
-  digitalWrite(38, LOW); // turn off the back light of lcd
-
-  // Upload & Sleep Mode setup
-  // Set timer to 30 seconds
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  delay(100);
+  if (bootNum == 0){ //print the logo when it's first turned on
+    print("Ready...!");
+    tft.fillScreen(TFT_BLACK);
+    digitalWrite(38, LOW); // turn off the back light of lcd
+  }
+  bootNum++;
 }
 
 void loop() {
-  determineOnOff();
+  
   // Read Temperature and Humidity Data
   aht.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
 
@@ -134,7 +141,7 @@ void loop() {
   }
 
   delay(500);
-  esp_light_sleep_start();
+  esp_deep_sleep_start();
 }
 
 // Below handler is not used
@@ -142,33 +149,36 @@ void IRAM_ATTR turnOff() {
   Serial.println("In turnOff()");
   print("Power off...");
   onMode = false;
-  delay(1000);
+  delay(10);
   esp_light_sleep_start();
   delay(100);
   Serial.println("Never got printed");
 }
 
-void determineOnOff(){
+void on_off(){
   esp_sleep_wakeup_cause_t wake_up_source;
   wake_up_source = esp_sleep_get_wakeup_cause();
-  if (wake_up_source == ESP_SLEEP_WAKEUP_EXT0){
+  if (wake_up_source == ESP_SLEEP_WAKEUP_EXT1){
     if (onMode){
-      esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
-
-      print("Power off...");
-      delay(1000);
-      tft.fillScreen(TFT_BLACK);
-      digitalWrite(38, LOW); // turn off the back light of lcd
-
-      onMode = false;
-      esp_light_sleep_start();
+      // Wake up from Sleep State
+      // Intend to switch off the board
+      // Disable the Timer Interrupt ---> Only wake up when pressed the button again
       
+      // esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
+      tft_setup();
+      print("Power off...");
+      onMode = false;
+      bootNum = 0;
+      delay(10);     
+      
+      esp_deep_sleep_start();
+    }
+    else{
+      // Wake up from Off Mode
+      // Resume the program: upload to server once and go to sleep (30min)
+      // Timer Interrupt should be enabled
       // Where it wakes up
       onMode=true;
-      delay(100);
-      showLogo();
-      esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-      delay(100);
     }
   }
 }
@@ -194,9 +204,11 @@ void print(String s){
   tft.setTextDatum(MC_DATUM);
   tft.drawString(s, tft.width()/2, tft.height()/2);
   delay(1000);
+  tft.fillScreen(TFT_PURPLE);
 }
 
 void showLogo(){
+  tft.setTextSize(3);
   tft.setTextDatum(MC_DATUM);
   tft.drawString("Anteater", tft.width()/2, 30);
   tft.drawString("Sleep", tft.width()/2, tft.height()/2);
@@ -210,12 +222,9 @@ void tft_setup(){
   // OLED Display Configuration
   tft.init();
   tft.setRotation(1);
-  tft.setTextSize(3);
-  tft.fillScreen(TFT_PURPLE);
   tft.setTextColor(TFT_WHITE, TFT_PURPLE);
-  // tft.setTextSize(3);
-
-  showLogo();
+  tft.setTextSize(2);
+  tft.fillScreen(TFT_PURPLE);
 }
 
 void AHT_setup(){
@@ -228,7 +237,6 @@ void AHT_setup(){
 
 void wifi_setup() {
   // We start by connecting to a WiFi network
-  print("Connecting to Wi-Fi");
   Serial.print("\nConnecting to "); Serial.println(ssid);
 
   WiFi.begin(ssid, pass);
