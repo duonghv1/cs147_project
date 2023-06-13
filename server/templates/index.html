@@ -8,8 +8,6 @@
     <title>Anteater Sleep Awareness </title>
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <!-- <link rel="stylesheet" href="style.css"> -->
-    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./style.css') }}" /> -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
 
@@ -252,34 +250,34 @@
 
                 // Add the Point
                 // Time Temperature
-                var data1 = [result[0], result[1]];
+                var data1 = [result[0], round(result[1], 2)];
 
                 // Time Humidity
-                var data2 = [result[0], result[2]];
+                var data2 = [result[0], round(result[2], 2)];
 
                 // Time Lightness
-                var data3 = [result[0], result[3]];
+                var data3 = [result[0], round(result[3], 2)];
 
                 // Time NoiseFreq
-                var data4 = [result[0], result[4]];
+                var data4 = [result[0], round(result[4], 2)];
 
                 // Time MotionFreq
-                var data5 = [result[0], result[5]];
+                var data5 = [result[0], round(result[5], 2)];
 
                 // Time Average Temperature
-                var data6 = [result[0], result[6]];
+                var data6 = [result[0], round(result[6], 2)];
 
                 // Time Average Humidity
-                var data7 = [result[0], result[7]];
+                var data7 = [result[0], round(result[7], 2)];
 
                 // Time Average Light
-                var data8 = [result[0], result[8]];
+                var data8 = [result[0], round(result[8], 2)];
 
                 // Time Average Noise Frequency
-                var data9 = [result[0], result[9]];
+                var data9 = [result[0], round(result[9], 2)];
 
                 // Time Average Motion Frequency
-                var data10 = [result[0], result[10]];
+                var data10 = [result[0], round(result[10], 2)];
 
                 // add normal data points
                 chartTemperatue.series[0].addPoint(data1, true, shiftTemperature);
@@ -571,6 +569,7 @@
     obj.centerTitle();
     </script>
     <script src = "../script.js"></script>
+    
 </body>
 
 
