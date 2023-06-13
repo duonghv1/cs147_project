@@ -30,10 +30,10 @@ uint16_t light_read;
 double light_val;
 
 // Wi-Fi configuration
-char ssid[50] = "Gone with the Wind";  //"UCInet Mobile Access";// your network SSID (name)
-char pass[50] =  "zotzotzot";  //{0};// your network password (use for WPA, or use as key for WEP)
+char ssid[50] = "UCInet Mobile Access"; //"Gone with the Wind"; // your network SSID (name)
+char pass[50] =  {0}; //"zotzotzot";  // your network password (use for WPA, or use as key for WEP)
 
-String public_IP = "54.177.115.132";//"18.219.240.227";
+String public_IP = "54.177.115.132"; //"3.137.176.1";
 const int port = 5000;
 
 // const int uploadFreq = 20*1000; //20 sec per update to the server
