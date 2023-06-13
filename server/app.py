@@ -3,7 +3,7 @@ import random
 import json
 from time import time
 from random import random
-from flask import Flask, render_template, make_response
+from flask import Flask, render_template, make_response, url_for
 from collections import defaultdict
 from metric import Metric
 
