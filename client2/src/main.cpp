@@ -33,13 +33,12 @@ bool has_sound = false;
 char ssid[50] = "Try Again";  //"UCInet Mobile Access"; //"Gone with the Wind";  // your network SSID (name)
 char pass[50] = "icanttellyou"; // {0}; //"zotzotzot"; // your network password (use for WPA, or use as key for WEP)
 
-String public_IP = "18.219.240.227"; // "54.177.115.132";
+String public_IP = "3.137.176.1"; //  "18.219.240.227"; // "54.177.115.132";
 const int port = 5000;
 // Number of milliseconds to wait without receiving any data before we give up
 const int kNetworkTimeout = 30 * 1000;
 // Number of milliseconds to wait if no data is available before trying again
 const int kNetworkDelay = 1000;
-
 const int uploadFreq = 20*1000; //20 sec per update to the server
 // const int samplingFreq = 50; //5 sec => for each sensor
 const int soundDetectFreq = 100; //Ref: duration of a finger click/snap is 50 ms ~ 150 ms
