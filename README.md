@@ -41,6 +41,6 @@ We host the web application using Amazon Web Services, EC2 instance. It allows 2
 
 ## Website Walkthough
 
-<img src="https://github.com/duonghv1/cs147_project/blob/master/view/webAppDemo.gif" width=500><br>
+<img src="https://github.com/duonghv1/cs147_project/blob/master/view/webAppDemo.gif" width=800><br>
 
 ## Final Thoughts
