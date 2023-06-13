@@ -10,11 +10,13 @@ double map(int read_val){
   // range(read_val) = (0, 4095)
   double range = double(upper_bound - lower_bound);
   double percent = (double)(read_val - lower_bound)/range;
-//   Serial.print("upper bound is ");Serial.println(upper_bound);
-//   Serial.print("lower bound is ");Serial.println(lower_bound);
-//   Serial.print("map returns ");Serial.println(percent);
-//   Serial.println();
-  return percent;
+  // percent range [0, 100]
+  return percent*100;
+}
+
+void default_calibration(){
+  upper_bound = 4095;
+  lower_bound = 0;
 }
 
 void light_calibration(int LIGHT_SENSOR){
