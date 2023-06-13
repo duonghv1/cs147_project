@@ -24,6 +24,8 @@ The device collect sound, light, temperature, humidity data from users' sleeping
 
 ### Tech Stacks
 
+<img src="https://github.com/duonghv1/cs147_project/blob/master/view/CS147FinalProject.drawio.png" width=500><br>
+
 #### **Hardware - LILYGO-TTGO ESP32:**
 With two ESP32 boards, we connect one to the light sensor and humidity/temperature sensor, which can be placed anywhere in the bedroom. The other board will be collecting data from the accelerometer and the microphone and will be wearable for users as they sleep. Sensors transmit data to ESP32 via the I2C serial protocol. Two boards will then send data separately to the backend via Wi-Fi in real time. 
 
